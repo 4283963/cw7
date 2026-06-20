@@ -11,6 +11,7 @@ func Setup(
 	mode string,
 	withdrawH *handlers.WithdrawHandler,
 	reconcileH *handlers.ReconcileHandler,
+	circuitH *handlers.CircuitHandler,
 ) *gin.Engine {
 	gin.SetMode(mode)
 	r := gin.New()
@@ -38,6 +39,11 @@ func Setup(
 		{
 			reconcile.POST("/check", reconcileH.Check)
 			reconcile.GET("/result/:batch_no", reconcileH.GetResult)
+		}
+		ops := v1.Group("/ops")
+		{
+			ops.POST("/withdraw/circuit", circuitH.Toggle)
+			ops.GET("/withdraw/circuit", circuitH.Status)
 		}
 	}
 	return r

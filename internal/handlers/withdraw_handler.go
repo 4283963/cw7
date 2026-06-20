@@ -45,6 +45,8 @@ func (h *WithdrawHandler) Apply(c *gin.Context) {
 			code = response.CodeWithdrawLimit
 		case contains(msg, "not found"), contains(msg, "not bind"):
 			code = response.CodeNotFound
+		case contains(msg, "circuit breaker is open"), contains(msg, "提现通道临时关闭"):
+			code = response.CodeCircuitOpen
 		}
 		response.Fail(c, code, msg)
 		return

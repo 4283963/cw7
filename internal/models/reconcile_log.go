@@ -7,6 +7,13 @@ const (
 	DiffTypeBankOnly       = "bank_only"
 	DiffTypeAmountMismatch = "amount_mismatch"
 	DiffTypeCardMismatch   = "card_mismatch"
+	DiffTypeOpsAction      = "ops_circuit_breaker"
+)
+
+const (
+	ReconcileStatusRunning   = 1
+	ReconcileStatusFinished  = 2
+	ReconcileStatusOpsAction = 9
 )
 
 type ReconcileLog struct {

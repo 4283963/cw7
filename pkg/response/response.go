@@ -22,6 +22,7 @@ const (
 	CodeBalance       = 1001
 	CodeWithdrawLimit = 1002
 	CodeInvalidAmount = 1003
+	CodeCircuitOpen   = 2001
 )
 
 func Success(c *gin.Context, data interface{}) {

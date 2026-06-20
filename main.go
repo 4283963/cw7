@@ -57,15 +57,17 @@ func main() {
 	reconcileRepo := repositories.NewReconcileRepository(config.DB)
 
 	// 构造 service
-	withdrawSvc := services.NewWithdrawService(driverRepo, withdrawRepo, idGen, &cfg.Withdraw)
+	circuitSvc := services.NewCircuitBreakerService(config.RDB, reconcileRepo, idGen)
+	withdrawSvc := services.NewWithdrawService(driverRepo, withdrawRepo, circuitSvc, idGen, &cfg.Withdraw)
 	reconcileSvc := services.NewReconcileService(withdrawRepo, bankRepo, reconcileRepo, idGen)
 
 	// 构造 handler
 	withdrawH := handlers.NewWithdrawHandler(withdrawSvc)
 	reconcileH := handlers.NewReconcileHandler(reconcileSvc)
+	circuitH := handlers.NewCircuitHandler(circuitSvc)
 
 	// 组装路由
-	engine := router.Setup(cfg.Server.Mode, withdrawH, reconcileH)
+	engine := router.Setup(cfg.Server.Mode, withdrawH, reconcileH, circuitH)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	srv := &http.Server{

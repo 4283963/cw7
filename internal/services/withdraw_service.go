@@ -27,6 +27,8 @@ type ApplyResult struct {
 	ApplyTime    string  `json:"apply_time"`
 }
 
+var ErrCircuitOpen = errors.New("withdraw circuit breaker is open")
+
 type WithdrawService interface {
 	Apply(ctx context.Context, req *ApplyRequest) (*ApplyResult, error)
 	GetByNo(ctx context.Context, no string) (*models.Withdrawal, error)
@@ -37,6 +39,7 @@ type WithdrawService interface {
 type withdrawService struct {
 	driverRepo     repositories.DriverRepository
 	withdrawalRepo repositories.WithdrawalRepository
+	circuitSvc     CircuitBreakerService
 	idGen          *snowflake.Snowflake
 	cfg            *config.WithdrawConfig
 }
@@ -44,12 +47,14 @@ type withdrawService struct {
 func NewWithdrawService(
 	driverRepo repositories.DriverRepository,
 	withdrawalRepo repositories.WithdrawalRepository,
+	circuitSvc CircuitBreakerService,
 	idGen *snowflake.Snowflake,
 	cfg *config.WithdrawConfig,
 ) WithdrawService {
 	return &withdrawService{
 		driverRepo:     driverRepo,
 		withdrawalRepo: withdrawalRepo,
+		circuitSvc:     circuitSvc,
 		idGen:          idGen,
 		cfg:            cfg,
 	}
@@ -68,6 +73,15 @@ func todayStr() string {
 }
 
 func (s *withdrawService) Apply(ctx context.Context, req *ApplyRequest) (*ApplyResult, error) {
+	if s.circuitSvc != nil {
+		open, msg, err := s.circuitSvc.IsOpen(ctx)
+		if err != nil {
+			fmt.Printf("warn: check circuit breaker error: %v\n", err)
+		}
+		if open {
+			return nil, fmt.Errorf("%s: %w", msg, ErrCircuitOpen)
+		}
+	}
 	if req == nil {
 		return nil, errors.New("empty request")
 	}
