@@ -104,9 +104,6 @@ func (s *withdrawService) Apply(ctx context.Context, req *ApplyRequest) (*ApplyR
 
 	updated, err := s.driverRepo.UpdateBalanceWithLock(ctx, req.DriverID, amount)
 	if err != nil {
-		if err.Error() == "insufficient balance" {
-			return nil, fmt.Errorf("insufficient balance: have %.2f, need %.2f", driver.Balance, amount)
-		}
 		return nil, err
 	}
 	if updated == nil {
